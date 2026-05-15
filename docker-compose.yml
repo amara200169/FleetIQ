@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: fleetiq
+      POSTGRES_PASSWORD: fleetiq
+      POSTGRES_DB: fleetiq
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    ports:
+      - '8000:8000'
+    environment:
+      DATABASE_URL: postgresql://fleetiq:fleetiq@postgres:5432/fleetiq
+      JWT_SECRET: fleetiq-local-dev-secret
+      JWT_EXPIRES_IN: 7d
+      PORT: 8000
+      FRONTEND_URL: http://localhost:3000
+    depends_on:
+      - postgres
+
+  frontend:
+    build: ./frontend/fleetiq-admin
+    ports:
+      - '3000:3000'
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

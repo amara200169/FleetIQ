@@ -1,0 +1,42 @@
+{
+  "name": "FleetIQ",
+  "short_name": "FleetIQ",
+  "description": "Fleet management platform — track vehicles, manage deliveries, monitor drivers in real time.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "My Deliveries",
+      "short_name": "Deliveries",
+      "description": "View and update your assigned deliveries",
+      "url": "/driver/dashboard",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Fleet Dashboard",
+      "short_name": "Fleet",
+      "description": "Monitor your fleet and live map",
+      "url": "/owner/dashboard",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+    }
+  ],
+  "categories": ["business", "productivity"]
+}

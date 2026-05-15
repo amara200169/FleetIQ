@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="38" fill="#1e40af"/>
+  <path d="M28 116 L28 76 L100 76 L100 116 Z" fill="white" opacity="0.95"/>
+  <path d="M100 116 L100 84 L140 84 L156 100 L156 116 Z" fill="white" opacity="0.95"/>
+  <circle cx="52" cy="122" r="10" fill="#1e40af" stroke="white" stroke-width="3"/>
+  <circle cx="128" cy="122" r="10" fill="#1e40af" stroke="white" stroke-width="3"/>
+  <rect x="28" y="108" width="128" height="8" fill="white" opacity="0.95"/>
+  <path d="M140 84 L156 100 L140 100 Z" fill="#93c5fd"/>
+  <text x="96" y="68" font-family="Arial,sans-serif" font-weight="900" font-size="22" text-anchor="middle" fill="white" letter-spacing="2">FLEETIQ</text>
+</svg>

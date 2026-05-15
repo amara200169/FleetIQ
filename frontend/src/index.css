@@ -1,0 +1,8 @@
+/* src/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* optional: a couple of safe defaults */
+html, body, #root { height: 100%; }
+body { margin: 0; }
