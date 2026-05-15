@@ -1,22 +1,13 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const multer = require('multer');
-const path = require('path');
-const crypto = require('crypto');
 
 const auth = require('../middleware/auth');
+const { uploadAvatar } = require('../lib/cloudinary');
 
 const router = express.Router();
 const prisma = require('../lib/prisma');
 
-const storage = multer.diskStorage({
-  destination: path.join(__dirname, '../../uploads/avatars'),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `avatar_${req.user.id}_${crypto.randomUUID()}${ext}`);
-  },
-});
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
+const upload = uploadAvatar;
 
 const profileSelect = {
   id: true, email: true, role: true, isActive: true,
@@ -84,7 +75,7 @@ router.patch('/password', auth, async (req, res) => {
 router.post('/avatar', auth, upload.single('avatar'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Avatar image is required' });
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    const avatarUrl = req.file.path;
     await prisma.user.update({ where: { id: req.user.id }, data: { avatar: avatarUrl } });
     res.json({ avatar: avatarUrl, message: 'Avatar updated' });
   } catch (err) {

@@ -132,7 +132,10 @@ export default function LoginPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-semibold text-gray-700">Password</label>
+                <a href="/forgot-password" className="text-xs text-blue-600 hover:underline font-medium">Forgot password?</a>
+              </div>
               <input
                 type="password"
                 value={password}
@@ -159,8 +162,12 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-10 text-center text-xs text-gray-400">
-            Contact your administrator if you need access.
+          <p className="mt-8 text-center text-sm text-gray-500">
+            New fleet owner?{' '}
+            <a href="/signup" className="text-blue-600 font-semibold hover:underline">Create a free account</a>
+          </p>
+          <p className="mt-3 text-center text-xs text-gray-400">
+            Drivers: contact your fleet manager for access.
           </p>
         </div>
       </div>

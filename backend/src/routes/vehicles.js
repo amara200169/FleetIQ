@@ -17,11 +17,16 @@ const vehicleSelect = {
   driver: { select: { id: true, email: true, firstName: true, lastName: true, phone: true } },
 };
 
-// GET /api/vehicles/drivers
+// GET /api/vehicles/drivers — drivers assigned to this owner's vehicles
 router.get('/drivers', auth, roles('FLEET_OWNER'), async (req, res) => {
   try {
+    const vehicles = await prisma.vehicle.findMany({
+      where: { ownerId: req.user.id, driverId: { not: null } },
+      select: { driverId: true },
+    });
+    const driverIds = vehicles.map((v) => v.driverId);
     const drivers = await prisma.user.findMany({
-      where: { role: 'DRIVER', isActive: true },
+      where: { id: { in: driverIds }, isActive: true },
       select: {
         id: true, email: true, firstName: true, lastName: true,
         phone: true, licenseNumber: true, licenseExpiry: true, avatar: true, createdAt: true,
@@ -51,17 +56,18 @@ router.post('/drivers', auth, roles('FLEET_OWNER'), async (req, res) => {
   }
 });
 
-// PATCH /api/vehicles/drivers/:id/reset-password — fleet owner resets a driver's password
+// PATCH /api/vehicles/drivers/:id/reset-password — fleet owner resets a driver's password (own fleet only)
 router.patch('/drivers/:id/reset-password', auth, roles('FLEET_OWNER'), async (req, res) => {
   try {
     const { newPassword } = req.body;
     if (!newPassword || newPassword.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
-    const driver = await prisma.user.findUnique({ where: { id: parseInt(req.params.id) } });
-    if (!driver || driver.role !== 'DRIVER') {
-      return res.status(404).json({ error: 'Driver not found' });
-    }
+    const driverId = parseInt(req.params.id);
+    const vehicle = await prisma.vehicle.findFirst({ where: { ownerId: req.user.id, driverId } });
+    if (!vehicle) return res.status(403).json({ error: 'Driver not assigned to your fleet' });
+    const driver = await prisma.user.findUnique({ where: { id: driverId } });
+    if (!driver || driver.role !== 'DRIVER') return res.status(404).json({ error: 'Driver not found' });
     const hashed = await bcrypt.hash(newPassword, 12);
     await prisma.user.update({ where: { id: driver.id }, data: { password: hashed } });
     await notify(driver.id, 'Password Changed', 'Your password has been reset by your fleet manager.', 'WARNING');

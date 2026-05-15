@@ -65,11 +65,16 @@ router.get('/location', auth, roles('DRIVER'), async (req, res) => {
   }
 });
 
-// GET /api/drivers/locations — all active driver locations (fleet owner)
+// GET /api/drivers/locations — locations of drivers assigned to this owner's vehicles only
 router.get('/locations', auth, roles('FLEET_OWNER'), async (req, res) => {
   try {
+    const vehicles = await prisma.vehicle.findMany({
+      where: { ownerId: req.user.id, driverId: { not: null } },
+      select: { driverId: true },
+    });
+    const driverIds = vehicles.map((v) => v.driverId);
     const drivers = await prisma.user.findMany({
-      where: { role: 'DRIVER', latitude: { not: null }, longitude: { not: null } },
+      where: { id: { in: driverIds }, latitude: { not: null }, longitude: { not: null } },
       select: { id: true, email: true, firstName: true, lastName: true, latitude: true, longitude: true },
     });
     res.json(drivers);
@@ -78,13 +83,16 @@ router.get('/locations', auth, roles('FLEET_OWNER'), async (req, res) => {
   }
 });
 
-// GET /api/drivers/:id/location-history — breadcrumb trail for a driver (fleet owner)
+// GET /api/drivers/:id/location-history — breadcrumb trail (only for owner's drivers)
 router.get('/:id/location-history', auth, roles('FLEET_OWNER'), async (req, res) => {
   try {
+    const driverId = parseInt(req.params.id);
+    const vehicle = await prisma.vehicle.findFirst({ where: { ownerId: req.user.id, driverId } });
+    if (!vehicle) return res.status(403).json({ error: 'Driver not assigned to your fleet' });
     const history = await prisma.locationHistory.findMany({
-      where: { driverId: parseInt(req.params.id) },
+      where: { driverId },
       orderBy: { createdAt: 'desc' },
-      take: 100, // last 100 points (~25 minutes at 15s interval)
+      take: 100,
       select: { latitude: true, longitude: true, createdAt: true },
     });
     res.json(history);

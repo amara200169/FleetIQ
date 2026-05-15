@@ -1,24 +1,15 @@
 const express = require('express');
-const multer = require('multer');
-const path = require('path');
-const crypto = require('crypto');
 const axios = require('axios');
 
 const auth = require('../middleware/auth');
 const roles = require('../middleware/roles');
 const notify = require('../utils/notify');
+const { uploadProof } = require('../lib/cloudinary');
 
 const router = express.Router();
 const prisma = require('../lib/prisma');
 
-const storage = multer.diskStorage({
-  destination: path.join(__dirname, '../../uploads/proofs'),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${crypto.randomUUID()}${ext}`);
-  },
-});
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
+const upload = uploadProof;
 
 const deliverySelect = {
   id: true, description: true, customerName: true, customerPhone: true, customerEmail: true,
@@ -82,6 +73,8 @@ router.get('/eta', auth, async (req, res) => {
       include: { vehicle: { include: { driver: true } } },
     });
     if (!delivery) return res.status(404).json({ error: 'Delivery not found' });
+    if (req.user.role === 'FLEET_OWNER' && delivery.vehicle?.ownerId !== req.user.id)
+      return res.status(403).json({ error: 'Access denied' });
     if (!delivery.latitude || !delivery.longitude) return res.status(400).json({ error: 'Delivery coordinates missing' });
     const driver = delivery.vehicle?.driver;
     if (!driver?.latitude || !driver?.longitude) return res.status(400).json({ error: 'Driver location not available' });
@@ -239,7 +232,7 @@ router.patch('/:id/proof', auth, roles('DRIVER'), upload.single('proof_image'), 
     const updated = await prisma.delivery.update({
       where: { id: delivery.id },
       data: {
-        proofImage: `/uploads/proofs/${req.file.filename}`,
+        proofImage: req.file.path,
         deliveryNote: req.body.delivery_note || null,
         status: 'DELIVERED',
         deliveredAt: new Date(),
@@ -285,12 +278,20 @@ router.get('/:id/driver-location', auth, roles('FLEET_OWNER'), async (req, res) 
   }
 });
 
-// GET /api/deliveries/:id — single delivery detail
+// GET /api/deliveries/:id — single delivery detail (scoped by role)
 router.get('/:id', auth, async (req, res) => {
   try {
-    const delivery = await prisma.delivery.findUnique({ where: { id: parseInt(req.params.id) }, select: deliverySelect });
+    const delivery = await prisma.delivery.findUnique({
+      where: { id: parseInt(req.params.id) },
+      include: { vehicle: { select: { ownerId: true, driverId: true } } },
+    });
     if (!delivery) return res.status(404).json({ error: 'Delivery not found' });
-    res.json(delivery);
+    if (req.user.role === 'FLEET_OWNER' && delivery.vehicle?.ownerId !== req.user.id)
+      return res.status(403).json({ error: 'Access denied' });
+    if (req.user.role === 'DRIVER' && delivery.vehicle?.driverId !== req.user.id && delivery.driverId !== req.user.id)
+      return res.status(403).json({ error: 'Access denied' });
+    const result = await prisma.delivery.findUnique({ where: { id: delivery.id }, select: deliverySelect });
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

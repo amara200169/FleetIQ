@@ -34,7 +34,8 @@ model User {
   notifications    Notification[]
   fuelLogs         FuelLog[]
   maintenanceLogs  MaintenanceLog[]
-  locationHistory  LocationHistory[]
+  locationHistory     LocationHistory[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 model Vehicle {
@@ -155,6 +156,17 @@ model LocationHistory {
   createdAt DateTime @default(now())
 
   driver User @relation(fields: [driverId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model TrackingEvent {
