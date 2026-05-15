@@ -27,8 +27,13 @@ router.post('/register', async (req, res) => {
     if (existing) return res.status(400).json({ error: 'Email already registered' });
 
     const hashed = await bcrypt.hash(password, 12);
+    const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
     const user = await prisma.user.create({
-      data: { email, password: hashed, role: 'FLEET_OWNER', firstName: firstName || null, lastName: lastName || null },
+      data: {
+        email, password: hashed, role: 'FLEET_OWNER',
+        firstName: firstName || null, lastName: lastName || null,
+        subscriptionStatus: 'trialing', trialEndsAt,
+      },
       select: { id: true, email: true, role: true, firstName: true, lastName: true, createdAt: true },
     });
 

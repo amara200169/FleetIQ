@@ -15,6 +15,10 @@ const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
   .concat(['http://localhost:3000', 'http://localhost:3001']);
 
 app.use(cors({ origin: allowedOrigins }));
+
+// Stripe webhook needs raw body — must be registered before express.json()
+app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), require('./routes/billing-webhook'));
+
 app.use(express.json());
 app.use('/uploads', (req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -33,6 +37,7 @@ app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/maintenance', require('./routes/maintenance'));
 app.use('/api/fuel', require('./routes/fuel'));
+app.use('/api/billing', require('./routes/billing'));
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

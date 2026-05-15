@@ -23,8 +23,12 @@ model User {
   latitude      Float?
   longitude     Float?
   lastSeen      DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  stripeCustomerId   String?
+  subscriptionStatus String    @default("trialing")
+  subscriptionId     String?
+  trialEndsAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   ownedVehicles    Vehicle[]       @relation("VehicleOwner")
   assignedVehicles Vehicle[]       @relation("VehicleDriver")
