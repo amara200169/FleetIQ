@@ -89,6 +89,7 @@ model Delivery {
   deliveryCost  Float?
   vehicleId     Int
   driverId      Int?
+  trackingSlug  String?   @unique
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

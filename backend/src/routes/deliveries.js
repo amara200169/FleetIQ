@@ -1,10 +1,15 @@
 const express = require('express');
 const axios = require('axios');
+const crypto = require('crypto');
+const { Resend } = require('resend');
 
 const auth = require('../middleware/auth');
 const roles = require('../middleware/roles');
 const notify = require('../utils/notify');
 const { uploadProof } = require('../lib/cloudinary');
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+const frontendUrl = () => (process.env.FRONTEND_URL || 'http://localhost:3000').split(',')[0].trim();
 
 const router = express.Router();
 const prisma = require('../lib/prisma');
@@ -124,6 +129,7 @@ router.post('/', auth, roles('FLEET_OWNER'), async (req, res) => {
       } catch (_) {}
     }
 
+    const trackingSlug = crypto.randomBytes(6).toString('hex');
     const delivery = await prisma.delivery.create({
       data: {
         description,
@@ -140,6 +146,7 @@ router.post('/', auth, roles('FLEET_OWNER'), async (req, res) => {
         scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
         deliveryCost: deliveryCost ? parseFloat(deliveryCost) : null,
         status: 'ASSIGNED',
+        trackingSlug,
       },
       select: deliverySelect,
     });
@@ -179,19 +186,37 @@ router.patch('/:id/status', auth, roles('DRIVER'), async (req, res) => {
 
     const updated = await prisma.delivery.update({ where: { id: delivery.id }, data: updateData, select: deliverySelect });
 
-    await Promise.all([
+    const tasks = [
       prisma.trackingEvent.create({
-        data: {
-          deliveryId: delivery.id,
-          actorId: req.user.id,
-          event: status,
-          notes: notes || null,
-        },
+        data: { deliveryId: delivery.id, actorId: req.user.id, event: status, notes: notes || null },
       }),
       notify(delivery.vehicle.ownerId, `Delivery ${status}`,
-        `Delivery to ${delivery.destination} has been marked ${status} by driver`, status === 'DELIVERED' ? 'SUCCESS' : status === 'FAILED' ? 'ERROR' : 'INFO'),
-    ]);
+        `Delivery to ${delivery.destination} has been marked ${status} by driver`,
+        status === 'DELIVERED' ? 'SUCCESS' : status === 'FAILED' ? 'ERROR' : 'INFO'),
+    ];
 
+    // Email customer their live tracking link when driver picks up
+    if (status === 'IN_TRANSIT' && delivery.customerEmail && delivery.trackingSlug) {
+      const trackUrl = `${frontendUrl()}/track/${delivery.trackingSlug}`;
+      tasks.push(resend.emails.send({
+        from: 'FleetIQ <noreply@fleetiq.app>',
+        to: delivery.customerEmail,
+        subject: `Your delivery is on the way!`,
+        html: `
+          <div style="font-family:sans-serif;max-width:520px;margin:0 auto">
+            <h2 style="color:#1e40af">Your delivery is on the way</h2>
+            <p>Hi ${delivery.customerName || 'there'},</p>
+            <p>Your delivery to <strong>${delivery.destination}</strong> is now in transit. Track it live:</p>
+            <a href="${trackUrl}" style="display:inline-block;background:#2563eb;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0">
+              Track My Delivery
+            </a>
+            <p style="color:#64748b;font-size:13px">This link updates in real time — no app needed.</p>
+          </div>
+        `,
+      }).catch(() => {}));
+    }
+
+    await Promise.all(tasks);
     res.json({ message: `Status updated to ${status}`, delivery: updated });
   } catch (err) {
     res.status(500).json({ error: err.message });

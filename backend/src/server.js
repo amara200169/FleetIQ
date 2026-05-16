@@ -38,6 +38,7 @@ app.use('/api/messages', require('./routes/messages'));
 app.use('/api/maintenance', require('./routes/maintenance'));
 app.use('/api/fuel', require('./routes/fuel'));
 app.use('/api/billing', require('./routes/billing'));
+app.use('/api/track', require('./routes/track'));
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
