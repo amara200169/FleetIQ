@@ -10,11 +10,16 @@ const prisma = require('../lib/prisma');
 const frontendUrl = () => (process.env.FRONTEND_URL || 'http://localhost:3000').split(',')[0].trim();
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD,
   },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
 });
 
 const signToken = (user) =>
@@ -77,9 +82,8 @@ router.post('/register', async (req, res) => {
       select: { id: true, email: true, role: true, firstName: true, lastName: true },
     });
 
-    await sendVerificationEmail(email, code);
-
     res.status(201).json({ message: 'Account created. Check your email for the verification code.', email });
+    sendVerificationEmail(email, code).catch((e) => console.error('Email send failed:', e.message));
   } catch (err) {
     if (err.code === 'P2002') return res.status(400).json({ error: 'Email already registered' });
     res.status(500).json({ error: err.message });
@@ -126,8 +130,8 @@ router.post('/resend-verification', async (req, res) => {
       data: { emailVerificationCode: code, emailVerificationExpiry },
     });
 
-    await sendVerificationEmail(email, code);
     res.json({ message: 'New verification code sent.' });
+    sendVerificationEmail(email, code).catch((e) => console.error('Email send failed:', e.message));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
