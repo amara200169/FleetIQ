@@ -2,11 +2,11 @@
 import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 
-const NO_SIDEBAR_PREFIXES = ['/', '/signup', '/verify-email', '/forgot-password', '/reset-password', '/track/'];
+const NO_SIDEBAR_EXACT = new Set(['/', '/signup', '/verify-email', '/forgot-password', '/reset-password']);
 
 export default function AppShell({ children }) {
   const pathname = usePathname();
-  if (NO_SIDEBAR_PREFIXES.some((p) => pathname === p || pathname.startsWith(p))) return <>{children}</>;
+  if (NO_SIDEBAR_EXACT.has(pathname) || pathname.startsWith('/track/')) return <>{children}</>;
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
