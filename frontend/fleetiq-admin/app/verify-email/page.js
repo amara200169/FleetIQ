@@ -110,7 +110,7 @@ function VerifyEmailForm() {
           )}
 
           {/* 6-digit code input */}
-          <div className="flex gap-2 mb-6" onPaste={handlePaste}>
+          <div className="flex justify-between gap-2 mb-6" onPaste={handlePaste}>
             {code.map((digit, i) => (
               <input
                 key={i}
@@ -122,7 +122,7 @@ function VerifyEmailForm() {
                 onChange={(e) => handleChange(i, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(i, e)}
                 disabled={loading}
-                className="flex-1 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:bg-blue-50 transition-all disabled:opacity-50 bg-gray-50"
+                className="w-11 h-12 text-center text-xl font-bold border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:bg-blue-50 transition-all disabled:opacity-50 bg-gray-50 flex-shrink-0"
               />
             ))}
           </div>
