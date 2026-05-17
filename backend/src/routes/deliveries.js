@@ -1,14 +1,17 @@
 const express = require('express');
 const axios = require('axios');
 const crypto = require('crypto');
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
 const auth = require('../middleware/auth');
 const roles = require('../middleware/roles');
 const notify = require('../utils/notify');
 const { uploadProof } = require('../lib/cloudinary');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+});
 const frontendUrl = () => (process.env.FRONTEND_URL || 'http://localhost:3000').split(',')[0].trim();
 
 const router = express.Router();
@@ -198,8 +201,8 @@ router.patch('/:id/status', auth, roles('DRIVER'), async (req, res) => {
     // Email customer their live tracking link when driver picks up
     if (status === 'IN_TRANSIT' && delivery.customerEmail && delivery.trackingSlug) {
       const trackUrl = `${frontendUrl()}/track/${delivery.trackingSlug}`;
-      tasks.push(resend.emails.send({
-        from: 'FleetIQ <onboarding@resend.dev>',
+      tasks.push(transporter.sendMail({
+        from: `"FleetIQ" <${process.env.GMAIL_USER}>`,
         to: delivery.customerEmail,
         subject: `Your delivery is on the way!`,
         html: `

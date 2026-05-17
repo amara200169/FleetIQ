@@ -2,13 +2,20 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
 const router = express.Router();
 const prisma = require('../lib/prisma');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const frontendUrl = () => (process.env.FRONTEND_URL || 'http://localhost:3000').split(',')[0].trim();
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
 
 const signToken = (user) =>
   jwt.sign(
@@ -20,8 +27,8 @@ const signToken = (user) =>
 const generateCode = () => String(Math.floor(100000 + Math.random() * 900000));
 
 const sendVerificationEmail = async (email, code) => {
-  await resend.emails.send({
-    from: 'FleetIQ <onboarding@resend.dev>',
+  await transporter.sendMail({
+    from: `"FleetIQ" <${process.env.GMAIL_USER}>`,
     to: email,
     subject: 'Verify your FleetIQ account',
     html: `
@@ -165,8 +172,8 @@ router.post('/forgot-password', async (req, res) => {
 
     const resetUrl = `${frontendUrl()}/reset-password?token=${token}`;
 
-    await resend.emails.send({
-      from: 'FleetIQ <onboarding@resend.dev>',
+    await transporter.sendMail({
+      from: `"FleetIQ" <${process.env.GMAIL_USER}>`,
       to: email,
       subject: 'Reset your FleetIQ password',
       html: `
