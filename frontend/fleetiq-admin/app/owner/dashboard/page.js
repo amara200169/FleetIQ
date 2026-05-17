@@ -92,6 +92,31 @@ export default function FleetOwnerDashboard() {
   const inTransit = deliveries.filter((d) => d.status === 'IN_TRANSIT').length;
   const completedDeliveries = deliveries.filter((d) => d.status === 'DELIVERED').length;
 
+  // Trial countdown banner
+  const TrialBanner = () => {
+    const [billing, setBilling] = useState(null);
+    useEffect(() => {
+      api.get('/api/billing/status').then(r => setBilling(r.data)).catch(() => {});
+    }, []);
+    if (!billing || billing.subscriptionStatus !== 'trialing') return null;
+    const daysLeft = billing.trialEndsAt
+      ? Math.max(0, Math.ceil((new Date(billing.trialEndsAt) - Date.now()) / (1000 * 60 * 60 * 24)))
+      : null;
+    if (daysLeft === null || daysLeft > 7) return null;
+    const urgent = daysLeft <= 2;
+    return (
+      <div className={`px-8 py-3 flex items-center justify-between text-sm ${urgent ? 'bg-red-600' : 'bg-amber-500'}`}>
+        <span className="text-white font-medium">
+          {daysLeft === 0 ? '⚠️ Your free trial has expired.' : `⏳ ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left in your free trial.`}
+          {' '}Subscribe now to keep access to all features.
+        </span>
+        <a href="/billing" className="bg-white text-gray-900 text-xs font-bold px-4 py-1.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0 ml-4">
+          Subscribe →
+        </a>
+      </div>
+    );
+  };
+
   if (loading) return (
     <div className="flex items-center justify-center h-full">
       <div className="flex flex-col items-center gap-3">
@@ -103,6 +128,7 @@ export default function FleetOwnerDashboard() {
 
   return (
     <div>
+      <TrialBanner />
       {/* Hero header */}
       <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 px-8 py-8">
         <div className="max-w-7xl mx-auto">

@@ -46,7 +46,12 @@ export default function LoginPage() {
       const dest = { ADMIN: '/dashboard', FLEET_OWNER: '/owner/dashboard', DRIVER: '/driver/dashboard' };
       router.push(dest[data.role] || '/');
     } catch (err) {
-      setError(err.response?.data?.error || 'Invalid email or password.');
+      const errData = err.response?.data;
+      if (errData?.requiresVerification) {
+        router.push(`/verify-email?email=${encodeURIComponent(errData.email)}`);
+        return;
+      }
+      setError(errData?.error || 'Invalid email or password.');
     } finally {
       setLoading(false);
     }

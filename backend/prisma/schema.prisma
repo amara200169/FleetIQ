@@ -23,6 +23,9 @@ model User {
   latitude      Float?
   longitude     Float?
   lastSeen      DateTime?
+  emailVerified          Boolean   @default(false)
+  emailVerificationCode  String?
+  emailVerificationExpiry DateTime?
   stripeCustomerId   String?
   subscriptionStatus String    @default("trialing")
   subscriptionId     String?
