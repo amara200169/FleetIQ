@@ -21,7 +21,7 @@ const generateCode = () => String(Math.floor(100000 + Math.random() * 900000));
 
 const sendVerificationEmail = async (email, code) => {
   await resend.emails.send({
-    from: 'FleetIQ <noreply@fleetiq.app>',
+    from: 'FleetIQ <onboarding@resend.dev>',
     to: email,
     subject: 'Verify your FleetIQ account',
     html: `
@@ -166,7 +166,7 @@ router.post('/forgot-password', async (req, res) => {
     const resetUrl = `${frontendUrl()}/reset-password?token=${token}`;
 
     await resend.emails.send({
-      from: 'FleetIQ <noreply@fleetiq.app>',
+      from: 'FleetIQ <onboarding@resend.dev>',
       to: email,
       subject: 'Reset your FleetIQ password',
       html: `

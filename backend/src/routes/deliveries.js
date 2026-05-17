@@ -199,7 +199,7 @@ router.patch('/:id/status', auth, roles('DRIVER'), async (req, res) => {
     if (status === 'IN_TRANSIT' && delivery.customerEmail && delivery.trackingSlug) {
       const trackUrl = `${frontendUrl()}/track/${delivery.trackingSlug}`;
       tasks.push(resend.emails.send({
-        from: 'FleetIQ <noreply@fleetiq.app>',
+        from: 'FleetIQ <onboarding@resend.dev>',
         to: delivery.customerEmail,
         subject: `Your delivery is on the way!`,
         html: `
