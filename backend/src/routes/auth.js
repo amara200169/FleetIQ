@@ -30,7 +30,7 @@ const generateCode = () => String(Math.floor(100000 + Math.random() * 900000));
 
 const sendVerificationEmail = async (email, code) => {
   await transporter.sendMail({
-    from: `"FleetIQ" <${process.env.GMAIL_USER}>`,
+    from: `"FleetIQ" <${process.env.BREVO_SMTP_USER}>`,
     to: email,
     subject: 'Verify your FleetIQ account',
     html: `
@@ -174,7 +174,7 @@ router.post('/forgot-password', async (req, res) => {
     const resetUrl = `${frontendUrl()}/reset-password?token=${token}`;
 
     await transporter.sendMail({
-      from: `"FleetIQ" <${process.env.GMAIL_USER}>`,
+      from: `"FleetIQ" <${process.env.BREVO_SMTP_USER}>`,
       to: email,
       subject: 'Reset your FleetIQ password',
       html: `
