@@ -72,14 +72,14 @@ router.post('/register', async (req, res) => {
         email, password: hashed, role: 'FLEET_OWNER',
         firstName: firstName || null, lastName: lastName || null,
         subscriptionStatus: 'trialing', trialEndsAt,
-        emailVerified: false,
+        emailVerified: true,
         emailVerificationCode: code,
         emailVerificationExpiry,
       },
       select: { id: true, email: true, role: true, firstName: true, lastName: true },
     });
 
-    res.status(201).json({ message: 'Account created. Check your email for the verification code.', email });
+    res.status(201).json({ token: signToken(user), role: user.role, email });
     sendVerificationEmail(email, code).catch((e) => console.error('Email send failed:', e.message));
   } catch (err) {
     if (err.code === 'P2002') return res.status(400).json({ error: 'Email already registered' });
@@ -146,10 +146,6 @@ router.post('/login', async (req, res) => {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
-    // Block unverified fleet owners (drivers/admins skip verification)
-    if (user.role === 'FLEET_OWNER' && !user.emailVerified) {
-      return res.status(403).json({ error: 'Please verify your email before logging in.', requiresVerification: true, email });
-    }
 
     res.json({ token: signToken(user), role: user.role });
   } catch (err) {

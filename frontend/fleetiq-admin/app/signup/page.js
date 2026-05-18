@@ -18,13 +18,15 @@ export default function SignupPage() {
     if (form.password.length < 8) return setError('Password must be at least 8 characters.');
     setLoading(true);
     try {
-      await api.post('/api/auth/register', {
+      const { data } = await api.post('/api/auth/register', {
         firstName: form.firstName,
         lastName: form.lastName,
         email: form.email,
         password: form.password,
       });
-      router.push(`/verify-email?email=${encodeURIComponent(form.email)}`);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('role', data.role);
+      router.push('/owner/dashboard');
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed. Please try again.');
     } finally {
